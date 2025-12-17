@@ -460,7 +460,7 @@
     document.querySelectorAll('.textarea').forEach(autoGrow);
     attachCounters(document.querySelectorAll('.textarea, .input'));
 
-    // Simple audio cues (from пример/). Quiet and pooled so every keypress sounds.
+    // Simple audio cues. Quiet and pooled so every keypress sounds.
     const audioManager = (() => {
       const makePool = (src, size = 4, baseVolume = 0.16) => {
         const pool = Array.from({ length: size }, () => {
@@ -495,8 +495,8 @@
       };
 
       const pools = {
-        click: makePool('пример/click.mp3', 5, 0.14),
-        deny: makePool('пример/deny.mp3', 3, 0.16),
+        click: makePool('click.mp3', 5, 0.14),
+        deny: makePool('deny.mp3', 3, 0.16),
       };
 
       let unlocked = false;
