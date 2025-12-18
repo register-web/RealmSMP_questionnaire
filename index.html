@@ -507,25 +507,6 @@
       padding: 16px;
       border-radius: 14px;
     }
-    .debug-info {
-      margin-top: 12px;
-      padding: 12px;
-      border-radius: 12px;
-      border: 1px dashed rgba(255,255,255,0.25);
-      background: rgba(255,255,255,0.05);
-      font-size: 13px;
-      color: #e0e4ec;
-      line-height: 1.5;
-      word-break: break-word;
-    }
-    .debug-info code { color: #c0e7ff; }
-    .debug-title {
-      font-weight: 700;
-      margin-bottom: 8px;
-      font-size: 13px;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
@@ -670,7 +651,7 @@
       };
       const formMessageEl = document.getElementById('formMessage');
       const searchParams = new URLSearchParams(window.location.search);
-      const debugEnabled = searchParams.get('debug') === '1';
+      const debugEnabled = false;
       const hasWebApp = Boolean(window.Telegram && window.Telegram.WebApp);
       const tg = hasWebApp ? window.Telegram.WebApp : null;
       if (tg) {
@@ -686,43 +667,9 @@
         lastStatus: null,
         lastError: null,
       };
-      let debugBox = null;
-
-      const ensureDebugBox = () => {
-        if (!debugEnabled) return null;
-        if (debugBox) return debugBox;
-        debugBox = document.createElement('div');
-        debugBox.className = 'debug-info';
-        const target = document.querySelector('.content') || document.body;
-        target.appendChild(debugBox);
-        return debugBox;
-      };
 
       const updateDebug = () => {
-        if (!debugEnabled) return;
-        const box = ensureDebugBox();
-        if (!box) return;
-        const telegramExists = typeof window.Telegram !== 'undefined';
-        const webAppExists = telegramExists && !!window.Telegram.WebApp;
-        const platform = tg?.platform ?? '—';
-        const version = tg?.version ?? '—';
-        const initDataLen = initData ? initData.length : 0;
-        const hasUnsafeUser = Boolean(tg?.initDataUnsafe?.user);
-        const hasUserId = Boolean(userId);
-        const userIdText = hasUserId ? userId : 'нет';
-        const lastStatus = state.lastStatus ? JSON.stringify(state.lastStatus) : '—';
-        const lastError = state.lastError || '—';
-        box.innerHTML = `
-          <div class="debug-title">Debug</div>
-          <div>window.Telegram: <code>${telegramExists}</code></div>
-          <div>window.Telegram.WebApp: <code>${webAppExists}</code></div>
-          <div>platform/version: <code>${platform} / ${version}</code></div>
-          <div>initData length: <code>${initDataLen}</code></div>
-          <div>initDataUnsafe.user: <code>${hasUnsafeUser}</code></div>
-          <div>user.id: <code>${hasUserId}</code> (${userIdText})</div>
-          <div>last status: <code>${lastStatus}</code></div>
-          <div>last error: <code>${lastError}</code></div>
-        `;
+        /* debug disabled per request */
       };
 
       const hideAllScreens = () => {
@@ -733,12 +680,25 @@
         });
       };
 
+      const refreshTextareas = () => {
+        document.querySelectorAll('.textarea').forEach((el) => {
+          const minH = 44;
+          const maxH = parseFloat(getComputedStyle(el).maxHeight) || 260;
+          el.style.height = 'auto';
+          const target = Math.min(Math.max(el.scrollHeight, minH), maxH);
+          el.style.height = `${target}px`;
+        });
+      };
+
       const showScreen = (key) => {
         hideAllScreens();
         const screen = screens[key];
         if (screen) {
           screen.classList.add('active');
           screen.removeAttribute('hidden');
+          if (key === 'form') {
+            requestAnimationFrame(refreshTextareas);
+          }
         }
       };
       showScreen('loading');
