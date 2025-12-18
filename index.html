@@ -341,6 +341,145 @@
       from { opacity: 0; transform: scale(1.01); }
       to   { opacity: 1; transform: scale(1.04); }
     }
+    .screens {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+    }
+    .screen {
+      display: none;
+      width: 100%;
+    }
+    .screen.active {
+      display: flex;
+    }
+    .form-screen {
+      justify-content: center;
+    }
+    .pending-screen,
+    .approved-screen {
+      align-items: center;
+      justify-content: center;
+      padding: 32px 18px;
+      min-height: 100vh;
+    }
+    .form-alert {
+      margin: 4px 0 6px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.06);
+      color: #f1f1f1;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .form-alert.error {
+      border-color: rgba(255, 120, 120, 0.35);
+      background: rgba(255, 120, 120, 0.08);
+      color: #ffd8d8;
+    }
+    .title-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+    .title-row img {
+      width: 150px;
+      height: 150px;
+      border-radius: 24px;
+      object-fit: cover;
+      border: none;
+      box-shadow: none;
+      animation: float 3.6s ease-in-out infinite;
+      transform-origin: center;
+    }
+    .stack {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: center;
+    }
+    .desc {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      text-align: center;
+    }
+    .pending-card {
+      width: min(440px, 100%);
+      background: #0f0f0f;
+      border: 1px solid var(--stroke);
+      border-radius: 22px;
+      padding: 18px 18px 20px;
+      box-shadow: 0 18px 38px rgba(0,0,0,0.45);
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .approved-card {
+      width: min(440px, 100%);
+      background: transparent;
+      border-radius: 22px;
+      padding: 10px 0 16px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .pending-card * ,
+    .approved-card * { position: relative; z-index: 2; }
+    .support-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #cfd3da;
+      font-size: 13px;
+      text-decoration: none;
+      border-bottom: 1px solid rgba(255,255,255,0.3);
+      padding-bottom: 2px;
+      margin-top: 14px;
+      transition: color .15s ease, border-color .15s ease, transform .15s ease;
+    }
+    .support-link:hover {
+      color: #ffffff;
+      border-color: rgba(255,255,255,0.5);
+      transform: translateY(-1px);
+    }
+    .support-link:active { transform: translateY(0); }
+    .mini-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+      font-weight: 700;
+      font-size: 13px;
+      text-decoration: none;
+      transition: transform .12s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease;
+      margin-top: 6px;
+    }
+    .mini-btn:hover {
+      transform: translateY(-1px);
+      border-color: rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.06);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    }
+    .mini-btn:active { transform: translateY(0); }
+    .tip {
+      margin-top: 12px;
+      font-size: 13px;
+      color: rgba(255,255,255,0.7);
+      text-align: center;
+    }
+    @keyframes float {
+      0% { transform: translateY(0) rotate(0deg) scale(1); }
+      50% { transform: translateY(-6px) rotate(-1deg) scale(1.01); }
+      100% { transform: translateY(0) rotate(0.5deg) scale(1); }
+    }
     @media (max-width: 520px) {
       .content { padding: 18px 16px 22px; gap: 16px; }
       .group { gap: 10px; }
@@ -357,63 +496,159 @@
   <canvas id="snowCanvasBack" class="snow-canvas back" aria-hidden="true"></canvas>
   <canvas id="snowCanvasFront" class="snow-canvas front" aria-hidden="true"></canvas>
   <div class="page-transition" id="pageTransition" aria-hidden="true"></div>
-  <div class="sheet">
-    <div class="content">
-      <div class="intro">
-        <div class="intro-image-wrap">
-          <img class="attached-image" src="IMG_2661.PNG" alt="Иллюстрация RealmSMP" loading="lazy" decoding="async">
-        </div>
-        <div class="intro-text">
-          <h1>Анкета на RealmSMP</h1>
-          <p class="hint">анкету возможно отправить только 1 раз</p>
-        </div>
-      </div>
-
-      <div class="group">
-        <label class="field">
-          <span class="label">Твоё имя или ник</span>
-          <input class="input" type="text" name="name" placeholder="Frost / Вова" autocomplete="name" maxlength="30" required>
-        </label>
-
-        <label class="field">
-          <span class="label">Сколько тебе лет?</span>
-          <input class="input" type="text" name="age" inputmode="numeric" pattern="[0-9]{1,2}" maxlength="2" placeholder="18" aria-label="Сколько тебе лет" required>
-        </label>
-
-        <label class="field countered">
-          <span class="label">Расскажи о себе</span>
-          <textarea class="textarea" rows="1" name="about" placeholder="кто ты, что из себя представляешь, стаж игры, ссылки на проекты/каналы" maxlength="250" required></textarea>
-          <span class="counter" data-counter="about">0/250</span>
-        </label>
-
-        <div class="field">
-          <span class="label">С чем будешь играть?</span>
-          <div class="pills">
-            <label class="pill"><input type="checkbox" name="with_cam" value="cam"><span class="pill-text">вебка</span></label>
-            <label class="pill"><input type="checkbox" name="with_voice" value="voice"><span class="pill-text">войс</span></label>
+  <main class="screens">
+    <section id="formScreen" class="screen form-screen" hidden>
+      <div class="sheet">
+        <div class="content">
+          <div class="intro">
+            <div class="intro-image-wrap">
+              <img class="attached-image" src="IMG_2661.PNG" alt="Иллюстрация RealmSMP" loading="lazy" decoding="async">
+            </div>
+            <div class="intro-text">
+              <h1>Анкета на RealmSMP</h1>
+              <p class="hint">анкету возможно отправить только 1 раз</p>
+            </div>
           </div>
+
+          <div class="group">
+            <label class="field">
+              <span class="label">Твоё имя или ник</span>
+              <input class="input" type="text" name="name" placeholder="Frost / Вова" autocomplete="name" maxlength="30" required>
+            </label>
+
+            <label class="field">
+              <span class="label">Сколько тебе лет?</span>
+              <input class="input" type="text" name="age" inputmode="numeric" pattern="[0-9]{1,2}" maxlength="2" placeholder="18" aria-label="Сколько тебе лет" required>
+            </label>
+
+            <label class="field countered">
+              <span class="label">Расскажи о себе</span>
+              <textarea class="textarea" rows="1" name="about" placeholder="кто ты, что из себя представляешь, стаж игры, ссылки на проекты/каналы" maxlength="250" required></textarea>
+              <span class="counter" data-counter="about">0/250</span>
+            </label>
+
+            <div class="field">
+              <span class="label">С чем будешь играть?</span>
+              <div class="pills">
+                <label class="pill"><input type="checkbox" name="with_cam" value="cam"><span class="pill-text">вебка</span></label>
+                <label class="pill"><input type="checkbox" name="with_voice" value="voice"><span class="pill-text">войс</span></label>
+              </div>
+            </div>
+
+            <label class="field">
+              <span class="label">Ник в Minecraft (вайт-лист)</span>
+              <input class="input" type="text" name="mc_nick" placeholder="RealmPlayer" maxlength="32" required>
+            </label>
+
+          </div>
+
+          <div class="field countered" style="margin-top: 6px;">
+            <span class="label">Комментарий для бота</span>
+            <textarea class="textarea" rows="1" name="comment" placeholder="необезательно" aria-label="Комментарий для бота" maxlength="66"></textarea>
+            <span class="counter" data-counter="comment">0/66</span>
+          </div>
+
+          <div class="actions">
+            <div class="form-alert error" id="formMessage" hidden role="alert"></div>
+            <button type="button" class="submit-btn" id="submitBtn" disabled aria-disabled="true">Отправить заявку</button>
+          </div>
+
         </div>
-
-        <label class="field">
-          <span class="label">Ник в Minecraft (вайт-лист)</span>
-          <input class="input" type="text" name="mc_nick" placeholder="RealmPlayer" maxlength="32" required>
-        </label>
-
       </div>
+    </section>
 
-      <div class="field countered" style="margin-top: 6px;">
-        <span class="label">Комментарий для бота</span>
-        <textarea class="textarea" rows="1" name="comment" placeholder="необезательно" aria-label="Комментарий для бота" maxlength="66"></textarea>
-        <span class="counter" data-counter="comment">0/66</span>
+    <section id="pendingScreen" class="screen pending-screen" hidden>
+      <div class="pending-card">
+        <div class="title-row">
+          <img src="загрузка.gif" alt="Котик ждёт ответа" loading="lazy" decoding="async">
+        </div>
+        <div class="stack">
+          <h1>Заявка в обработке</h1>
+          <div class="desc">
+            <p>Мы уже получили твою анкету и скоро посмотрим.</p>
+            <p>Обычно это занимает не более 24 часов.</p>
+          </div>
+          <a class="support-link" href="https://t.me/RealmSMPSupport_bot" target="_blank" rel="noopener noreferrer">
+            <span>написать в поддержку</span>
+          </a>
+        </div>
+        <div class="tip">мы уведомим в боте, когда появится решение</div>
       </div>
+    </section>
 
-      <div class="actions">
-        <button type="button" class="submit-btn" id="submitBtn" disabled aria-disabled="true">Отправить заявку</button>
+    <section id="approvedScreen" class="screen approved-screen" hidden>
+      <div class="approved-card">
+        <div class="title-row">
+          <img src="1234.gif" alt="Одобрено" loading="lazy" decoding="async">
+        </div>
+        <div class="stack">
+          <h1>Заявка одобрена 🎉🎉🎉</h1>
+          <div class="desc">
+            <p>Твоя анкета прошла проверку — добро пожаловать!</p>
+          </div>
+          <a class="mini-btn" href="http://t.me/realmSMP_bot/inf" target="_blank" rel="noopener noreferrer">что дальше</a>
+        </div>
       </div>
-
-    </div>
-  </div>
+    </section>
+  </main>
   <script>
+    const API_URL = 'https://script.google.com/macros/s/AKfycbywk8M-vrJ11TMN0UTPoGjUQXHqkTE4RdyQ8Y8h-PjEW5jMIAxWZEoaWsjHapIon15u5A/exec';
+    const screens = {
+      form: document.getElementById('formScreen'),
+      pending: document.getElementById('pendingScreen'),
+      approved: document.getElementById('approvedScreen'),
+    };
+    const formMessageEl = document.getElementById('formMessage');
+    const tg = window.Telegram?.WebApp;
+    const user = tg?.initDataUnsafe?.user;
+    const userId = user?.id;
+    tg?.ready?.();
+
+    function hideAllScreens() {
+      Object.values(screens).forEach((screen) => {
+        if (!screen) return;
+        screen.classList.remove('active');
+        screen.setAttribute('hidden', 'true');
+      });
+    }
+
+    function showForm() {
+      hideAllScreens();
+      if (screens.form) {
+        screens.form.classList.add('active');
+        screens.form.removeAttribute('hidden');
+      }
+    }
+
+    function showPending() {
+      hideAllScreens();
+      if (screens.pending) {
+        screens.pending.classList.add('active');
+        screens.pending.removeAttribute('hidden');
+      }
+    }
+
+    function showApproved() {
+      hideAllScreens();
+      if (screens.approved) {
+        screens.approved.classList.add('active');
+        screens.approved.removeAttribute('hidden');
+      }
+    }
+
+    const setFormMessage = (text, isError = true) => {
+      if (!formMessageEl) return;
+      if (!text) {
+        formMessageEl.hidden = true;
+        formMessageEl.textContent = '';
+        formMessageEl.classList.remove('error');
+        return;
+      }
+      formMessageEl.hidden = false;
+      formMessageEl.textContent = text;
+      formMessageEl.classList.toggle('error', isError);
+    };
+
     const autoGrow = (el) => {
       const minH = 44;
       const maxH = parseFloat(getComputedStyle(el).maxHeight) || 260;
@@ -518,6 +753,32 @@
       };
     })();
 
+    const submitBtn = document.getElementById('submitBtn');
+    const requiredNames = ['name', 'age', 'about', 'mc_nick'];
+    const checkboxNames = ['with_cam', 'with_voice'];
+    let isSubmitting = false;
+
+    const allRequiredFilled = () => {
+      const fieldsOk = requiredNames.every((name) => {
+        const el = document.querySelector(`[name="${name}"]`);
+        return el && el.value.trim().length > 0;
+      });
+      const anyChecked = checkboxNames.some((name) => {
+        const el = document.querySelector(`[name="${name}"]`);
+        return el && el.checked;
+      });
+      return fieldsOk && anyChecked;
+    };
+
+    const canSubmit = () => allRequiredFilled() && !!userId && !isSubmitting;
+
+    const syncSubmitState = () => {
+      if (!submitBtn) return;
+      const filled = canSubmit();
+      submitBtn.disabled = !filled;
+      submitBtn.setAttribute('aria-disabled', filled ? 'false' : 'true');
+    };
+
     const bindAudio = () => {
       document.querySelectorAll('.input, .textarea').forEach((el) => {
         el.addEventListener('focus', () => audioManager.play('click', 0.14));
@@ -544,52 +805,121 @@
       });
     }
 
-    // Basic validation + submit simulation
-    const submitBtn = document.getElementById('submitBtn');
-    const requiredNames = ['name', 'age', 'about', 'mc_nick'];
-    const checkboxNames = ['with_cam', 'with_voice'];
-
-    const allRequiredFilled = () => {
-      const fieldsOk = requiredNames.every((name) => {
-        const el = document.querySelector(`[name="${name}"]`);
-        return el && el.value.trim().length > 0;
+    const collectAnswers = () => {
+      const answers = {};
+      document.querySelectorAll('input[name], textarea[name]').forEach((el) => {
+        if (el.type === 'checkbox') {
+          answers[el.name] = el.checked;
+        } else {
+          answers[el.name] = el.value.trim();
+        }
       });
-      const anyChecked = checkboxNames.some((name) => {
-        const el = document.querySelector(`[name="${name}"]`);
-        return el && el.checked;
-      });
-      return fieldsOk && anyChecked;
+      return answers;
     };
 
-    const syncSubmitState = () => {
-      if (!submitBtn) return;
-      const filled = allRequiredFilled();
-      submitBtn.disabled = !filled;
-      submitBtn.setAttribute('aria-disabled', filled ? 'false' : 'true');
+    const callApi = async (payload) => {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 12000);
+      try {
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+          signal: controller.signal,
+        });
+
+        const raw = await response.text();
+        let data = null;
+        try {
+          data = raw ? JSON.parse(raw) : null;
+        } catch (_) {
+          throw new Error('Сервер вернул некорректный ответ');
+        }
+
+        if (!response.ok) {
+          throw new Error(data?.error || `Ошибка ${response.status}`);
+        }
+        if (!data) throw new Error('Пустой ответ сервера');
+        return data;
+      } catch (err) {
+        if (err?.name === 'AbortError') {
+          throw new Error('Превышено время ожидания (12с)');
+        }
+        throw err instanceof Error ? err : new Error('Неизвестная ошибка сети');
+      } finally {
+        clearTimeout(timer);
+      }
     };
 
-    const goToProcessing = () => {
-      const layer = document.getElementById('pageTransition');
-      if (layer) {
-        layer.classList.add('active');
-        setTimeout(() => {
-          window.location.href = 'processing.html';
-        }, 400);
-      } else {
-        window.location.href = 'processing.html';
+    const checkStatus = async () => {
+      if (!userId) {
+        setFormMessage('Открой через Telegram');
+        showForm();
+        syncSubmitState();
+        return;
+      }
+      try {
+        setFormMessage('');
+        const data = await callApi({ action: 'status', telegram_id: userId });
+        if (data?.status === 'APPROVED') {
+          showApproved();
+        } else if (data?.status === 'PENDING') {
+          showPending();
+        } else {
+          showForm();
+        }
+      } catch (err) {
+        setFormMessage(err.message || 'Не удалось получить статус');
+        showForm();
+      } finally {
+        syncSubmitState();
+      }
+    };
+
+    const submitApplication = async () => {
+      if (!submitBtn || submitBtn.disabled || isSubmitting) return;
+      if (!userId) {
+        setFormMessage('Открой через Telegram');
+        return;
+      }
+      isSubmitting = true;
+      syncSubmitState();
+      submitBtn.textContent = 'Отправляем...';
+      setFormMessage('');
+      try {
+        const answers = collectAnswers();
+        const res = await callApi({ action: 'submit', telegram: user, answers });
+        if (res?.ok) {
+          showPending();
+        } else if (res?.error === 'ALREADY_SUBMITTED') {
+          await checkStatus();
+        } else if (res?.error) {
+          setFormMessage(res.error);
+          showForm();
+        } else {
+          showPending();
+        }
+      } catch (err) {
+        setFormMessage(err.message || 'Не удалось отправить заявку');
+        showForm();
+      } finally {
+        isSubmitting = false;
+        submitBtn.textContent = 'Отправить заявку';
+        syncSubmitState();
       }
     };
 
     submitBtn?.addEventListener('click', (e) => {
       e.preventDefault();
-      if (submitBtn.disabled) return;
       audioManager.play('click', 0.18);
-      goToProcessing();
+      submitApplication();
     });
 
     // Init state
+    hideAllScreens();
     syncSubmitState();
     bindAudio();
+    checkStatus();
 
     // Snow effect (front + back layers)
     const startSnow = (id, density = 1) => {
