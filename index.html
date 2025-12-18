@@ -837,7 +837,7 @@
         return fieldsOk && anyChecked;
       };
 
-      const canSubmit = () => allRequiredFilled() && !!initData && !isSubmitting;
+      const canSubmit = () => allRequiredFilled() && !!userId && !isSubmitting;
 
       const syncSubmitState = () => {
         if (!submitBtn) return;
@@ -884,28 +884,30 @@
         return answers;
       };
 
-      const callApi = async (payload) => {
+      const postApi = async (payload) => {
         if (!API_URL) throw new Error('API_URL не задан');
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), 12000);
+        let raw = '';
         try {
           const response = await fetch(API_URL, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
             body: JSON.stringify(payload),
+            cache: 'no-store',
             signal: controller.signal,
           });
 
-          const raw = await response.text();
+          raw = await response.text();
           let data = null;
           try {
             data = raw ? JSON.parse(raw) : null;
           } catch (_) {
-            throw new Error('Сервер вернул некорректный ответ');
+            data = { error: raw || 'Сервер вернул некорректный ответ' };
           }
 
           if (!response.ok) {
-            throw new Error(data?.error || `Ошибка ${response.status}`);
+            throw new Error(data?.error || raw || `Ошибка ${response.status}`);
           }
           if (!data) throw new Error('Пустой ответ сервера');
           return data;
@@ -913,14 +915,14 @@
           if (err?.name === 'AbortError') {
             throw new Error('Превышено время ожидания (12с)');
           }
-          throw err instanceof Error ? err : new Error('Неизвестная ошибка сети');
+          throw err instanceof Error ? err : new Error(raw || 'Неизвестная ошибка сети');
         } finally {
           clearTimeout(timer);
         }
       };
 
-      const requireInitData = () => {
-        if (!initData) {
+      const requireUser = () => {
+        if (!userId) {
           setFormMessage('Нет Telegram initData. Открой через кнопку Web App у бота и не нажимай "Открыть в браузере".');
           showForm();
           syncSubmitState();
@@ -930,10 +932,10 @@
       };
 
       const checkStatus = async () => {
-        if (!requireInitData()) return;
+        if (!requireUser()) return;
         try {
           setFormMessage('');
-          const data = await callApi({ action: 'status', initData });
+          const data = await postApi({ action: 'status', telegram_id: userId });
           if (data?.status === 'APPROVED') {
             showApproved();
           } else if (data?.status === 'PENDING') {
@@ -951,14 +953,14 @@
 
       const submitApplication = async () => {
         if (!submitBtn || submitBtn.disabled || isSubmitting) return;
-        if (!requireInitData()) return;
+        if (!requireUser()) return;
         isSubmitting = true;
         syncSubmitState();
         submitBtn.textContent = 'Отправляем...';
         setFormMessage('');
         try {
           const answers = collectAnswers();
-          const res = await callApi({ action: 'submit', initData, answers });
+          const res = await postApi({ action: 'submit', telegram: user, answers });
           if (res?.ok) {
             showPending();
           } else if (res?.error === 'ALREADY_SUBMITTED') {
