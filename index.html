@@ -672,6 +672,16 @@
         /* debug disabled per request */
       };
 
+      const normalizeErrorText = (text) => {
+        const trimmed = String(text || '').trim();
+        if (!trimmed) return 'Не удалось связаться с сервером';
+        const lower = trimmed.toLowerCase();
+        if (lower.startsWith('<') || lower.includes('<html')) {
+          return 'Сервер вернул ошибку 405. Попробуйте позже.';
+        }
+        return trimmed;
+      };
+
       const hideAllScreens = () => {
         Object.values(screens).forEach((screen) => {
           if (!screen) return;
@@ -907,7 +917,7 @@
           }
 
           if (!response.ok) {
-            throw new Error(data?.error || raw || `Ошибка ${response.status}`);
+            throw new Error(normalizeErrorText(data?.error || raw || `Ошибка ${response.status}`));
           }
           if (!data) throw new Error('Пустой ответ сервера');
           return data;
@@ -915,7 +925,8 @@
           if (err?.name === 'AbortError') {
             throw new Error('Превышено время ожидания (12с)');
           }
-          throw err instanceof Error ? err : new Error(raw || 'Неизвестная ошибка сети');
+          const message = err instanceof Error ? err.message : raw || 'Неизвестная ошибка сети';
+          throw new Error(normalizeErrorText(message));
         } finally {
           clearTimeout(timer);
         }
@@ -996,14 +1007,17 @@
           } else if (res?.error === 'ALREADY_SUBMITTED') {
             await checkStatus();
           } else if (res?.error) {
-            setFormMessage(res.error);
+            const msg = normalizeErrorText(res.error);
+            state.lastError = msg;
+            setFormMessage(msg);
             applyStatus('NONE');
           } else {
             applyStatus('PENDING');
           }
         } catch (err) {
-          state.lastError = err.message || 'Не удалось отправить заявку';
-          setFormMessage(state.lastError);
+          const msg = normalizeErrorText(err.message || 'Не удалось отправить заявку');
+          state.lastError = msg;
+          setFormMessage(msg);
           applyStatus('NONE');
         } finally {
           isSubmitting = false;
