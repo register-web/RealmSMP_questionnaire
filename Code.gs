@@ -1,7 +1,18 @@
 const SCRIPT_PROPS = PropertiesService.getScriptProperties();
 const APPLICATION_PREFIX = 'APPLICATION_';
+const STATUS = {
+  NONE: 'NONE',
+  PENDING: 'PENDING',
+  APPROVED: 'APPROVED',
+  DENIED: 'DENIED',
+};
 
 const getProp_ = (key, fallback = '') => SCRIPT_PROPS.getProperty(key) || fallback;
+const getRequiredProp_ = (key) => {
+  const val = getProp_(key, '');
+  if (!val) throw new Error(`${key}_NOT_SET`);
+  return val;
+};
 
 const tgApiFetch_ = (method, payload) => {
   const token = getProp_('BOT_TOKEN');
@@ -128,6 +139,8 @@ const jsonResponse_ = (data) => ContentService
   .createTextOutput(JSON.stringify(data || {}))
   .setMimeType(ContentService.MimeType.JSON);
 
+const errorResponse_ = (code, detail) => jsonResponse_({ error: code, detail: detail || '' });
+
 const bytesToHex_ = (bytes) => (bytes || [])
   .map((b) => {
     const normalized = b < 0 ? 256 + b : b;
@@ -160,8 +173,7 @@ const verifyInitData_ = (initData) => {
   const hash = parsed.hash;
   if (!hash) throw new Error('INIT_DATA_HASH_MISSING');
 
-  const token = getProp_('BOT_TOKEN');
-  if (!token) throw new Error('BOT_TOKEN not set');
+  const token = getRequiredProp_('BOT_TOKEN');
 
   const dataCheckString = buildDataCheckString_(parsed);
   // Первый ключ: HMAC_SHA256("WebAppData", botToken)
@@ -212,18 +224,37 @@ const saveApplication_ = (userId, data) => {
 
 const getStatus_ = (userId) => {
   const application = loadApplication_(userId);
-  return application?.status || 'NONE';
+  return application?.status || STATUS.NONE;
+};
+
+const setStatus_ = (userId, status) => {
+  if (!userId) throw new Error('USER_ID_REQUIRED');
+  const allowed = Object.values(STATUS);
+  if (!allowed.includes(status)) throw new Error('STATUS_NOT_ALLOWED');
+
+  const existing = loadApplication_(userId) || { telegram: { id: userId } };
+  const updated = {
+    ...existing,
+    status,
+    updatedAt: new Date().toISOString(),
+  };
+  saveApplication_(userId, updated);
+
+  if (status === STATUS.APPROVED) {
+    try { notifyUserApproved_(userId); } catch (err) { Logger.log(`notify user failed: ${err}`); }
+  }
+  return updated;
 };
 
 function doPost(e) {
   try {
     const params = e?.parameter || {};
     const action = String(params.action || '').toLowerCase();
-    if (!action) return jsonResponse_({ error: 'NO_ACTION' });
+    if (!action) return errorResponse_('NO_ACTION');
 
     const initData = params.initData;
     const { user } = verifyInitData_(initData);
-    if (!user || !user.id) return jsonResponse_({ error: 'TELEGRAM_USER_MISSING' });
+    if (!user || !user.id) return errorResponse_('TELEGRAM_USER_MISSING');
 
     if (action === 'status') {
       const status = getStatus_(user.id);
@@ -233,12 +264,12 @@ function doPost(e) {
     if (action === 'submit') {
       const answers = parseAnswers_(params.answers);
       const currentStatus = getStatus_(user.id);
-      if (currentStatus !== 'NONE') {
+      if (currentStatus !== STATUS.NONE) {
         return jsonResponse_({ error: 'ALREADY_SUBMITTED', status: currentStatus });
       }
 
       const application = {
-        status: 'PENDING',
+        status: STATUS.PENDING,
         telegram: user,
         answers,
         createdAt: new Date().toISOString(),
@@ -251,6 +282,19 @@ function doPost(e) {
     return jsonResponse_({ error: 'UNKNOWN_ACTION' });
   } catch (err) {
     Logger.log(`handler error: ${err.message}\n${err.stack}`);
-    return jsonResponse_({ error: err.message || 'SERVER_ERROR' });
+    return errorResponse_(err.message || 'SERVER_ERROR');
   }
+}
+
+// Утилиты для ручного управления статусами из редактора Apps Script (Run -> select function):
+function adminApproveUser(userId) {
+  return setStatus_(userId, STATUS.APPROVED);
+}
+
+function adminDenyUser(userId) {
+  return setStatus_(userId, STATUS.DENIED);
+}
+
+function adminResetUser(userId) {
+  return setStatus_(userId, STATUS.NONE);
 }
