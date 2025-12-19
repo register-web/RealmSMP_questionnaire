@@ -164,10 +164,14 @@ const verifyInitData_ = (initData) => {
   if (!token) throw new Error('BOT_TOKEN not set');
 
   const dataCheckString = buildDataCheckString_(parsed);
-  // Первый ключ: HMAC(botToken, "WebAppData")
-  const secretKeyBytes = Utilities.computeHmacSha256Signature(token, 'WebAppData', Utilities.Charset.UTF_8);
-  // Проверочный хэш: HMAC(dataCheckString, secretKeyBytes)
-  const checkBytes = Utilities.computeHmacSha256Signature(dataCheckString, Utilities.newBlob(secretKeyBytes).getBytes());
+  // Первый ключ: HMAC_SHA256("WebAppData", botToken)
+  const secretKeyBytes = Utilities.computeHmacSha256Signature('WebAppData', token, Utilities.Charset.UTF_8);
+  // Проверочный хэш: HMAC_SHA256(dataCheckString, secretKeyBytes)
+  const checkBytes = Utilities.computeHmacSignature(
+    Utilities.MacAlgorithm.HMAC_SHA_256,
+    dataCheckString,
+    secretKeyBytes
+  );
   const checkHash = bytesToHex_(checkBytes);
   if (checkHash !== hash) throw new Error('INIT_DATA_INVALID');
 
