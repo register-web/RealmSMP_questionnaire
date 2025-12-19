@@ -88,6 +88,11 @@ document.addEventListener('DOMContentLoaded', () => {
       el.addEventListener('input', () => { counter.textContent = `${el.value.length}/${el.maxLength}`; });
     }
   });
+  document.querySelectorAll('input[name], textarea[name]').forEach((el) => {
+    const handler = () => syncSubmitState();
+    el.addEventListener('input', handler);
+    el.addEventListener('change', handler);
+  });
 
   const allRequiredFilled = () => {
     const filled = requiredNames.every((n) => (document.querySelector(`[name="${n}"]`)?.value || '').trim());

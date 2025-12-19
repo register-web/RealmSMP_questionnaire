@@ -1,4 +1,5 @@
 const SCRIPT_PROPS = PropertiesService.getScriptProperties();
+const APPLICATION_PREFIX = 'APPLICATION_';
 
 const getProp_ = (key, fallback = '') => SCRIPT_PROPS.getProperty(key) || fallback;
 
@@ -121,4 +122,131 @@ function notifyUserApproved_(chatId) {
     replyMarkup,
     { parse_mode: 'HTML' }
   );
+}
+
+const jsonResponse_ = (data) => ContentService
+  .createTextOutput(JSON.stringify(data || {}))
+  .setMimeType(ContentService.MimeType.JSON);
+
+const bytesToHex_ = (bytes) => (bytes || [])
+  .map((b) => {
+    const normalized = b < 0 ? 256 + b : b;
+    return normalized.toString(16).padStart(2, '0');
+  })
+  .join('');
+
+const parseInitData_ = (initData) => {
+  const result = {};
+  const pairs = String(initData || '').split('&').filter(Boolean);
+  pairs.forEach((pair) => {
+    const [rawKey, rawValue = ''] = pair.split('=');
+    const key = decodeURIComponent(rawKey || '');
+    // Telegram передаёт '+' как пробел, нормализуем перед decodeURIComponent
+    const value = decodeURIComponent((rawValue || '').replace(/\+/g, '%20'));
+    result[key] = value;
+  });
+  return result;
+};
+
+const buildDataCheckString_ = (data) => Object.keys(data || {})
+  .filter((key) => key !== 'hash')
+  .sort()
+  .map((key) => `${key}=${data[key]}`)
+  .join('\n');
+
+const verifyInitData_ = (initData) => {
+  if (!initData) throw new Error('INIT_DATA_REQUIRED');
+  const parsed = parseInitData_(initData);
+  const hash = parsed.hash;
+  if (!hash) throw new Error('INIT_DATA_HASH_MISSING');
+
+  const token = getProp_('BOT_TOKEN');
+  if (!token) throw new Error('BOT_TOKEN not set');
+
+  const dataCheckString = buildDataCheckString_(parsed);
+  // Первый ключ: HMAC(botToken, "WebAppData")
+  const secretKeyBytes = Utilities.computeHmacSha256Signature(token, 'WebAppData', Utilities.Charset.UTF_8);
+  // Проверочный хэш: HMAC(dataCheckString, secretKeyBytes)
+  const checkBytes = Utilities.computeHmacSha256Signature(dataCheckString, Utilities.newBlob(secretKeyBytes).getBytes());
+  const checkHash = bytesToHex_(checkBytes);
+  if (checkHash !== hash) throw new Error('INIT_DATA_INVALID');
+
+  let user = null;
+  try {
+    user = parsed.user ? JSON.parse(parsed.user) : null;
+  } catch (_) {
+    user = null;
+  }
+  return { user, authDate: Number(parsed.auth_date) || 0, raw: parsed };
+};
+
+const parseAnswers_ = (raw) => {
+  if (!raw) return {};
+  if (typeof raw === 'object') return raw;
+  try {
+    return JSON.parse(raw);
+  } catch (_) {
+    return {};
+  }
+};
+
+const loadApplication_ = (userId) => {
+  if (!userId) return null;
+  const raw = SCRIPT_PROPS.getProperty(`${APPLICATION_PREFIX}${userId}`);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch (_) {
+    return null;
+  }
+};
+
+const saveApplication_ = (userId, data) => {
+  if (!userId || !data) return;
+  SCRIPT_PROPS.setProperty(`${APPLICATION_PREFIX}${userId}`, JSON.stringify(data));
+};
+
+const getStatus_ = (userId) => {
+  const application = loadApplication_(userId);
+  return application?.status || 'NONE';
+};
+
+function doPost(e) {
+  try {
+    const params = e?.parameter || {};
+    const action = String(params.action || '').toLowerCase();
+    if (!action) return jsonResponse_({ error: 'NO_ACTION' });
+
+    const initData = params.initData;
+    const { user } = verifyInitData_(initData);
+    if (!user || !user.id) return jsonResponse_({ error: 'TELEGRAM_USER_MISSING' });
+
+    if (action === 'status') {
+      const status = getStatus_(user.id);
+      return jsonResponse_({ status });
+    }
+
+    if (action === 'submit') {
+      const answers = parseAnswers_(params.answers);
+      const currentStatus = getStatus_(user.id);
+      if (currentStatus !== 'NONE') {
+        return jsonResponse_({ error: 'ALREADY_SUBMITTED', status: currentStatus });
+      }
+
+      const application = {
+        status: 'PENDING',
+        telegram: user,
+        answers,
+        createdAt: new Date().toISOString(),
+      };
+      saveApplication_(user.id, application);
+      try { notifyAdminNewApplication_(application); } catch (notifyErr) { Logger.log(`notify admin failed: ${notifyErr}`); }
+      return jsonResponse_({ ok: true, status: 'PENDING' });
+    }
+
+    return jsonResponse_({ error: 'UNKNOWN_ACTION' });
+  } catch (err) {
+    Logger.log(`handler error: ${err.message}\n${err.stack}`);
+    return jsonResponse_({ error: err.message || 'SERVER_ERROR' });
+  }
 }
